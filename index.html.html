@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Briefing — Satvik</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #16161f;
+    --border: #1e1e2e;
+    --border2: #2a2a3a;
+    --accent: #e8c97a;
+    --accent2: #4ecdc4;
+    --accent3: #ff6b6b;
+    --accent4: #a8d8a8;
+    --text: #e8e8f0;
+    --text2: #9090a8;
+    --text3: #5a5a70;
+    --green: #4ecdc4;
+    --red: #ff6b6b;
+    --yellow: #e8c97a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(232,201,122,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,201,122,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 32px 0 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .header-left {}
+  .header-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .header-title span { color: var(--accent); }
+  .header-right { text-align: right; }
+  .header-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text2);
+    letter-spacing: 0.1em;
+  }
+  .gen-btn {
+    margin-top: 10px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 10px 22px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: block;
+    margin-left: auto;
+  }
+  .gen-btn:hover { background: #f0d88a; transform: translateY(-1px); }
+  .gen-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── TICKER BAR ── */
+  .ticker-bar {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 10px 20px;
+    margin-bottom: 28px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ticker-scroll {
+    display: flex;
+    gap: 40px;
+    animation: ticker 40s linear infinite;
+    white-space: nowrap;
+  }
+  @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+  .ticker-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ticker-sym { color: var(--text2); font-weight: 500; }
+  .ticker-price { color: var(--text); }
+  .ticker-chg.up { color: var(--green); }
+  .ticker-chg.dn { color: var(--red); }
+  .ticker-sep { color: var(--border2); }
+
+  /* ── MAIN GRID ── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .briefing-panel {
+    grid-column: 1 / 4;
+  }
+
+  /* ── PANEL BASE ── */
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+  .panel-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 2px 7px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .badge-live { background: rgba(255,107,107,0.15); color: var(--red); border: 1px solid rgba(255,107,107,0.3); }
+  .badge-ai { background: rgba(232,201,122,0.12); color: var(--accent); border: 1px solid rgba(232,201,122,0.25); }
+  .badge-cal { background: rgba(78,205,196,0.12); color: var(--accent2); border: 1px solid rgba(78,205,196,0.25); }
+  .panel-body { padding: 18px; }
+
+  /* ── BRIEFING ── */
+  .briefing-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 0;
+    gap: 16px;
+  }
+  .briefing-spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .briefing-loading-msg {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+  }
+
+  .briefing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .brief-section {
+    padding: 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    position: relative;
+  }
+  .brief-section.full { grid-column: 1 / 4; background: rgba(232,201,122,0.05); border-color: rgba(232,201,122,0.2); }
+  .brief-section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .brief-section.full .brief-section-label { color: var(--accent); }
+  .brief-section-text {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--text);
+  }
+  .brief-section.full .brief-section-text { font-size: 14px; font-weight: 500; }
+
+  /* ── EQUITY TABLE ── */
+  .eq-table { width: 100%; border-collapse: collapse; }
+  .eq-table th {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 6px 8px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  .eq-table th:first-child { text-align: left; }
+  .eq-table td {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 9px 8px;
+    text-align: right;
+    border-bottom: 1px solid rgba(30,30,46,0.5);
+  }
+  .eq-table td:first-child { text-align: left; color: var(--text2); font-size: 11px; }
+  .eq-table tr:last-child td { border-bottom: none; }
+  .eq-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .up { color: var(--green); }
+  .dn { color: var(--red); }
+  .eq-name { font-size: 13px !important; color: var(--text) !important; font-weight: 500; }
+
+  /* ── FIXED INCOME ── */
+  .fi-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .fi-row:last-child { border-bottom: none; }
+  .fi-left { display: flex; flex-direction: column; gap: 2px; }
+  .fi-name { font-size: 13px; font-weight: 500; color: var(--text); }
+  .fi-desc { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text3); }
+  .fi-right { text-align: right; }
+  .fi-yield { font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 500; }
+  .fi-chg { font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+
+  /* ── CALENDAR ── */
+  .cal-list { display: flex; flex-direction: column; gap: 0; }
+  .cal-item {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .cal-item:last-child { border-bottom: none; }
+  .cal-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.05em;
+  }
+  .cal-date.today { color: var(--accent); }
+  .cal-event { font-size: 13px; color: var(--text); line-height: 1.3; }
+  .cal-event small { display: block; font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .cal-impact {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .impact-high { background: rgba(255,107,107,0.15); color: var(--red); border: 1px solid rgba(255,107,107,0.3); }
+  .impact-med { background: rgba(232,201,122,0.12); color: var(--accent); border: 1px solid rgba(232,201,122,0.25); }
+  .impact-low { background: rgba(90,90,112,0.2); color: var(--text3); border: 1px solid var(--border2); }
+
+  /* ── COMMODITIES ROW ── */
+  .commodities-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .commodity-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    border-radius: 3px;
+  }
+  .commodity-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 6px;
+  }
+  .commodity-price {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+  .commodity-chg {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  /* ── SECOND GRID ── */
+  .second-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .third-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-note {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.05em;
+  }
+  .footer-timestamp {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  /* ── PULSE DOT ── */
+  .pulse-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--red);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+  }
+
+  .section-divider {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin: 8px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* empty state */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text3);
+  }
+  .empty-state p { font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; }
+  .empty-icon { font-size: 28px; margin-bottom: 12px; }
+
+  /* responsive */
+  @media (max-width: 900px) {
+    .main-grid, .briefing-grid { grid-template-columns: 1fr; }
+    .briefing-panel { grid-column: 1; }
+    .brief-section.full { grid-column: 1; }
+    .second-grid, .third-grid, .commodities-row { grid-template-columns: 1fr 1fr; }
+    .header-title { font-size: 26px; }
+  }
+  @media (max-width: 560px) {
+    .second-grid, .third-grid, .commodities-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-label">◆ Morning Market Intelligence</div>
+      <div class="header-title">The <span>Brief</span></div>
+    </div>
+    <div class="header-right">
+      <div class="header-date" id="dateDisplay"></div>
+      <button class="gen-btn" id="genBtn" onclick="generateBriefing()">⟳ Generate Today's Briefing</button>
+    </div>
+  </div>
+
+  <!-- TICKER BAR -->
+  <div class="ticker-bar">
+    <div class="ticker-scroll" id="tickerScroll">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- COMMODITIES ROW -->
+  <div class="commodities-row">
+    <div class="commodity-card">
+      <div class="commodity-label">S&P 500 Futures</div>
+      <div class="commodity-price" style="color:var(--red)">7,413</div>
+      <div class="commodity-chg dn">▼ -5.75 (-0.08%)</div>
+    </div>
+    <div class="commodity-card">
+      <div class="commodity-label">Crude Oil (WTI)</div>
+      <div class="commodity-price" style="color:var(--green)">$100.11</div>
+      <div class="commodity-chg up">▲ +4.69 (+4.92%)</div>
+    </div>
+    <div class="commodity-card">
+      <div class="commodity-label">Gold</div>
+      <div class="commodity-price" style="color:var(--red)">$4,683</div>
+      <div class="commodity-chg dn">▼ -47.60 (-1.01%)</div>
+    </div>
+    <div class="commodity-card">
+      <div class="commodity-label">10-Yr Treasury</div>
+      <div class="commodity-price">4.38%</div>
+      <div class="commodity-chg" style="color:var(--text3)">─ Flat</div>
+    </div>
+  </div>
+
+  <!-- AI BRIEFING (full width) -->
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-header">
+      <span class="panel-title"><span class="pulse-dot"></span>AI Market Briefing</span>
+      <span class="panel-badge badge-ai">Claude-Powered</span>
+    </div>
+    <div class="panel-body">
+      <div class="briefing-loading" id="briefingLoading" style="display:none;">
+        <div class="briefing-spinner"></div>
+        <div class="briefing-loading-msg" id="loadingMsg">Scanning markets...</div>
+      </div>
+      <div id="briefingContent">
+        <div class="empty-state">
+          <div class="empty-icon">📡</div>
+          <p>Click "Generate Today's Briefing" to open Claude<br>with your morning briefing prompt pre-filled and ready to send.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EQUITIES + FIXED INCOME -->
+  <div class="second-grid">
+    <!-- EQUITIES -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Equities</span>
+        <span class="panel-badge badge-live">Friday Close</span>
+      </div>
+      <div class="panel-body" style="padding:14px 18px;">
+        <div class="section-divider">US Indices</div>
+        <table class="eq-table">
+          <thead>
+            <tr>
+              <th>Instrument</th>
+              <th>Last</th>
+              <th>Chg</th>
+              <th>%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><span class="eq-name">S&P 500</span></td><td>7,399</td><td class="up">+57.4</td><td class="up">+0.78%</td></tr>
+            <tr><td><span class="eq-name">Nasdaq</span></td><td>26,247</td><td class="up">+426</td><td class="up">+1.65%</td></tr>
+            <tr><td><span class="eq-name">Dow Jones</span></td><td>49,609</td><td class="up">+12</td><td class="up">+0.02%</td></tr>
+            <tr><td><span class="eq-name">Russell 2000</span></td><td>2,867</td><td class="dn">-8.1</td><td class="dn">-0.28%</td></tr>
+          </tbody>
+        </table>
+        <div class="section-divider" style="margin-top:14px;">Sector Leaders (WoW)</div>
+        <table class="eq-table">
+          <thead><tr><th>Sector</th><th>WoW Chg</th></tr></thead>
+          <tbody>
+            <tr><td><span class="eq-name">Technology</span></td><td class="up">+5.8%</td></tr>
+            <tr><td><span class="eq-name">Communication</span></td><td class="up">+4.2%</td></tr>
+            <tr><td><span class="eq-name">Materials</span></td><td class="up">+3.1%</td></tr>
+            <tr><td><span class="eq-name">Energy</span></td><td class="dn">-1.4%</td></tr>
+            <tr><td><span class="eq-name">Utilities</span></td><td class="dn">-0.8%</td></tr>
+          </tbody>
+        </table>
+        <div class="section-divider" style="margin-top:14px;">Notable Movers (Friday)</div>
+        <table class="eq-table">
+          <thead><tr><th>Ticker</th><th>Move</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td><span class="eq-name">CSCO</span></td><td class="up">+4.77%</td><td style="color:var(--text2);font-size:11px;">Earnings beat</td></tr>
+            <tr><td><span class="eq-name">MU</span></td><td class="up">+Surged</td><td style="color:var(--text2);font-size:11px;">AI chip demand</td></tr>
+            <tr><td><span class="eq-name">NTDO</span></td><td class="dn">-10%</td><td style="color:var(--text2);font-size:11px;">Switch 2 price hike</td></tr>
+            <tr><td><span class="eq-name">NVDA</span></td><td class="up">+2.80%</td><td style="color:var(--text2);font-size:11px;">PHLX Semis ATH</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- FIXED INCOME -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Fixed Income</span>
+        <span class="panel-badge badge-live">Friday Close</span>
+      </div>
+      <div class="panel-body">
+        <div class="section-divider">US Treasuries</div>
+        <div class="fi-row">
+          <div class="fi-left">
+            <div class="fi-name">2-Year Note</div>
+            <div class="fi-desc">UST 2Y • Short-end</div>
+          </div>
+          <div class="fi-right">
+            <div class="fi-yield up">4.82%</div>
+            <div class="fi-chg up">▲ +3bps</div>
+          </div>
+        </div>
+        <div class="fi-row">
+          <div class="fi-left">
+            <div class="fi-name">5-Year Note</div>
+            <div class="fi-desc">UST 5Y • Belly</div>
+          </div>
+          <div class="fi-right">
+            <div class="fi-yield" style="color:var(--text)">4.61%</div>
+            <div class="fi-chg" style="color:var(--text3)">─ Flat</div>
+          </div>
+        </div>
+        <div class="fi-row">
+          <div class="fi-left">
+            <div class="fi-name">10-Year Note</div>
+            <div class="fi-desc">UST 10Y • Benchmark</div>
+          </div>
+          <div class="fi-right">
+            <div class="fi-yield" style="color:var(--text)">4.38%</div>
+            <div class="fi-chg" style="color:var(--text3)">─ Flat</div>
+          </div>
+        </div>
+        <div class="fi-row">
+          <div class="fi-left">
+            <div class="fi-name">30-Year Bond</div>
+            <div class="fi-desc">UST 30Y • Long-end</div>
+          </div>
+          <div class="fi-right">
+            <div class="fi-yield dn">4.71%</div>
+            <div class="fi-chg dn">▼ -2bps</div>
+          </div>
+        </div>
+
+        <div class="section-divider" style="margin-top:14px;">Spreads & Curves</div>
+        <div class="fi-row">
+          <div class="fi-left">
+            <div class="fi-name">2s10s Spread</div>
+            <div class="fi-desc">Yield curve slope</div>
+          </div>
+          <div class="fi-right">
+            <div class="fi-yield" style="color:var(--text);font-size:14px;">-44 bps</div>
+            <div class="fi-chg dn">Inverted</div>
+          </div>
+        </div>
+        <div class="fi-row">
+          <div class="fi-left">
+            <div class="fi-name">IG Credit (OAS)</div>
+            <div class="fi-desc">Inv-grade corporate spread</div>
+          </div>
+          <div class="fi-right">
+            <div class="fi-yield" style="color:var(--text);font-size:14px;">~98 bps</div>
+            <div class="fi-chg" style="color:var(--text3)">Stable</div>
+          </div>
+        </div>
+        <div class="fi-row">
+          <div class="fi-left">
+            <div class="fi-name">HY Credit (OAS)</div>
+            <div class="fi-desc">High yield spread</div>
+          </div>
+          <div class="fi-right">
+            <div class="fi-yield" style="color:var(--text);font-size:14px;">~320 bps</div>
+            <div class="fi-chg up">▼ Tightening</div>
+          </div>
+        </div>
+
+        <div class="section-divider" style="margin-top:14px;">Fed Watch</div>
+        <div class="fi-row">
+          <div class="fi-left">
+            <div class="fi-name">Fed Funds Rate</div>
+            <div class="fi-desc">Current target range</div>
+          </div>
+          <div class="fi-right">
+            <div class="fi-yield" style="color:var(--accent);font-size:15px;">4.25–4.50%</div>
+            <div class="fi-chg" style="color:var(--text3)">On hold</div>
+          </div>
+        </div>
+        <div class="fi-row">
+          <div class="fi-left">
+            <div class="fi-name">First Cut Market Odds</div>
+            <div class="fi-desc">CME FedWatch implied</div>
+          </div>
+          <div class="fi-right">
+            <div class="fi-yield" style="color:var(--text);font-size:14px;">Sep 2026</div>
+            <div class="fi-chg dn">CPI-dependent</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR (full width) -->
+  <div class="panel" style="margin-bottom:16px;">
+    <div class="panel-header">
+      <span class="panel-title">Economic Calendar — Week of May 11</span>
+      <span class="panel-badge badge-cal">Upcoming Releases</span>
+    </div>
+    <div class="panel-body">
+      <div class="cal-list">
+        <div class="cal-item">
+          <div class="cal-date today">MON 5/11</div>
+          <div class="cal-event">
+            No major scheduled US releases
+            <small>Asia: South Korea trade data; UK GDP (Monthly)</small>
+          </div>
+          <span class="cal-impact impact-low">Low</span>
+        </div>
+        <div class="cal-item">
+          <div class="cal-date" style="color:var(--red)">TUE 5/12 ★</div>
+          <div class="cal-event">
+            <strong>April CPI (8:30am ET)</strong>
+            <small>Headline exp: +0.6% MoM / +3.7% YoY | Core exp: +0.3% / +2.7% — Most watched print of the year</small>
+          </div>
+          <span class="cal-impact impact-high">🔴 High</span>
+        </div>
+        <div class="cal-item">
+          <div class="cal-date" style="color:var(--red)">TUE 5/12</div>
+          <div class="cal-event">
+            <strong>Senate Vote: Kevin Warsh Fed Chair Nomination</strong>
+            <small>Powell's term expires May 15 — Warsh expected to be confirmed; hawkish successor</small>
+          </div>
+          <span class="cal-impact impact-high">🔴 High</span>
+        </div>
+        <div class="cal-item">
+          <div class="cal-date">WED 5/13</div>
+          <div class="cal-event">
+            April PPI (8:30am ET)
+            <small>Producer price inflation — upstream pressure gauge</small>
+          </div>
+          <span class="cal-impact impact-high">High</span>
+        </div>
+        <div class="cal-item">
+          <div class="cal-date">WED 5/13</div>
+          <div class="cal-event">
+            April Retail Sales (8:30am ET)
+            <small>Consumer spending barometer; key for GDP tracking</small>
+          </div>
+          <span class="cal-impact impact-med">Med</span>
+        </div>
+        <div class="cal-item">
+          <div class="cal-date">THU 5/14</div>
+          <div class="cal-event">
+            Initial Jobless Claims (8:30am ET) + Import Prices
+            <small>Claims exp ~225k; import prices colored by oil/Iran</small>
+          </div>
+          <span class="cal-impact impact-med">Med</span>
+        </div>
+        <div class="cal-item">
+          <div class="cal-date">THU 5/14</div>
+          <div class="cal-event">
+            Earnings: Cisco (CSCO) — After Hours
+            <small>Tech bellwether; enterprise AI spend, networking</small>
+          </div>
+          <span class="cal-impact impact-med">Med</span>
+        </div>
+        <div class="cal-item">
+          <div class="cal-date">FRI 5/15</div>
+          <div class="cal-event">
+            <strong>Powell's Fed Chair Term Expires</strong>
+            <small>Warsh formally assumes role if confirmed Tuesday</small>
+          </div>
+          <span class="cal-impact impact-high">High</span>
+        </div>
+        <div class="cal-item">
+          <div class="cal-date">FRI 5/15</div>
+          <div class="cal-event">
+            Michigan Consumer Sentiment (Prelim, May)
+            <small>Inflation expectations component key given energy spike</small>
+          </div>
+          <span class="cal-impact impact-med">Med</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-note">The Brief by Satvik · Powered by Claude + Web Search</div>
+    <div class="footer-timestamp" id="footerTs"></div>
+  </div>
+
+</div>
+
+<script>
+// ── DATE & TIME ──────────────────────────────────────────
+function updateTime() {
+  const now = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-US', opts).toUpperCase();
+  document.getElementById('footerTs').textContent = 'Last updated: ' + now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+}
+updateTime();
+
+// ── TICKER ──────────────────────────────────────────────
+const tickers = [
+  { sym:'SPY', price:'739.9', chg:'+0.78%', up:true },
+  { sym:'QQQ', price:'459.2', chg:'+1.65%', up:true },
+  { sym:'TLT', price:'91.4', chg:'-0.12%', up:false },
+  { sym:'GLD', price:'432.1', chg:'-1.01%', up:false },
+  { sym:'USO', price:'98.7', chg:'+4.92%', up:true },
+  { sym:'VIX', price:'17.19', chg:'+0.64%', up:true },
+  { sym:'BTC', price:'80,841', chg:'+0.20%', up:true },
+  { sym:'EUR/USD', price:'1.1756', chg:'-0.28%', up:false },
+  { sym:'NVDA', price:'938.2', chg:'+2.80%', up:true },
+  { sym:'CSCO', price:'62.4', chg:'+4.77%', up:true },
+];
+
+function buildTicker() {
+  const items = [...tickers, ...tickers]; // doubled for seamless loop
+  return items.map(t => `
+    <span class="ticker-item">
+      <span class="ticker-sym">${t.sym}</span>
+      <span class="ticker-price">${t.price}</span>
+      <span class="ticker-chg ${t.up ? 'up' : 'dn'}">${t.chg}</span>
+    </span>
+    <span class="ticker-sep">|</span>
+  `).join('');
+}
+document.getElementById('tickerScroll').innerHTML = buildTicker();
+
+// ── AI BRIEFING ──────────────────────────────────────────
+let loadingInterval;
+const loadingMessages = [
+  'Scanning overnight macro headlines...',
+  'Pulling Fed signals and rate data...',
+  'Analyzing equity futures and sector flows...',
+  'Checking geopolitical risk and oil...',
+  'Building your analyst briefing...',
+];
+
+function buildPrompt() {
+  const today = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  return `Good morning — give me my daily market briefing for ${today}. I want: macro overview (overnight headlines, geopolitical risk, central bank news), US equities (futures, sector rotation, notable movers), rates & fixed income (Treasury yields, Fed watch, credit spreads), international markets (Asia, Europe, EM), the key releases/events to watch this week with dates, and your single most important thing for an analyst to have on their radar today. Be sharp and specific.`;
+}
+
+function generateBriefing() {
+  const prompt = buildPrompt();
+  const url = 'https://claude.ai/new?q=' + encodeURIComponent(prompt);
+  
+  // Show a "launching" state briefly
+  const btn = document.getElementById('genBtn');
+  btn.textContent = 'Opening Claude...';
+  btn.disabled = true;
+
+  // Update the briefing panel to show instructions
+  document.getElementById('briefingLoading').style.display = 'none';
+  document.getElementById('briefingContent').innerHTML = `
+    <div style="padding: 28px 20px; text-align: center;">
+      <div style="font-size: 28px; margin-bottom: 16px;">🚀</div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: var(--accent); margin-bottom: 8px; letter-spacing: 0.05em;">Claude is opening in a new tab</div>
+      <div style="font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; color: var(--text2); line-height: 1.6; max-width: 480px; margin: 0 auto;">
+        Your briefing prompt has been pre-filled. Just hit send in Claude and paste your summary back here, or keep both tabs open side by side.
+      </div>
+      <div style="margin-top: 20px;">
+        <a href="${url}" target="_blank" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--accent); text-decoration:none; border:1px solid rgba(232,201,122,0.3); padding:8px 18px; letter-spacing:0.1em;">
+          ↗ OPEN CLAUDE AGAIN
+        </a>
+      </div>
+    </div>`;
+
+  window.open(url, '_blank');
+
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = '⟳ Generate Today\'s Briefing';
+  }, 2000);
+}
+</script>
+</body>
+</html>
